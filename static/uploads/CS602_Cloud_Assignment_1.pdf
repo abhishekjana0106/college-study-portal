@@ -1,0 +1,74 @@
+%PDF-1.4
+1 0 obj
+<<
+  /Type /Catalog
+  /Pages 2 0 R
+>>
+endobj
+2 0 obj
+<<
+  /Type /Pages
+  /Kids [3 0 R]
+  /Count 1
+>>
+endobj
+3 0 obj
+<<
+  /Type /Page
+  /Parent 2 0 R
+  /MediaBox [0 0 612 792]
+  /Contents 4 0 R
+  /Resources <<
+    /Font <<
+      /F1 5 0 R
+    >>
+  >>
+>>
+endobj
+4 0 obj
+<<
+  /Length 530
+>>
+stream
+BT
+/F1 18 Tf
+50 720 Td
+(Cloud Computing - Assignment 1) Tj
+/F1 12 Tf
+0 -30 Td
+(Subject: Cloud Computing (CS602)) Tj
+0 -20 Td
+(Centralized College Academic Repository) Tj
+0 -40 Td
+(Task 1: Create a multi-container Docker application using docker-compose.) Tj
+0 -18 Td
+(Task 2: Design high-availability architecture on AWS using EC2, ALB, and RDS.) Tj
+0 -18 Td
+(Task 3: Compare cost and latency between Serverless [AWS Lambda] vs Containers.) Tj
+0 -18 Td
+ET
+endstream
+endobj
+5 0 obj
+<<
+  /Type /Font
+  /Subtype /Type1
+  /BaseFont /Helvetica
+>>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000010 00000 n 
+0000000060 00000 n 
+0000000117 00000 n 
+0000000262 00000 n 
+0000000850 00000 n 
+trailer
+<<
+  /Size 6
+  /Root 1 0 R
+>>
+startxref
+940
+%%EOF
