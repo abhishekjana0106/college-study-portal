@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard | Academix Portal{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Admin Nav Ribbon -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <span class="text-xs font-bold text-rose-600 uppercase tracking-wider">Administrative Control Panel</span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-0.5">System Overview & Analytics</h1>
+        </div>
+        
+        <!-- Navigation Tabs -->
+        <div class="flex items-center space-x-1 overflow-x-auto pb-2 md:pb-0 text-xs font-semibold">
+            <a href="{{ url_for('admin.dashboard') }}" class="px-3.5 py-2 rounded-xl bg-blue-600 text-white shadow-sm">Dashboard</a>
+            <a href="{{ url_for('admin.pending_queue') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 flex items-center space-x-1.5">
+                <span>Review Queue</span>
+                {% if stats.pending_resources > 0 %}
+                    <span class="px-1.5 py-0.2 bg-rose-500 text-white text-[10px] rounded-full font-bold">{{ stats.pending_resources }}</span>
+                {% endif %}
+            </a>
+            <a href="{{ url_for('admin.manage_resources') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Resources</a>
+            <a href="{{ url_for('admin.manage_users') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Users</a>
+            <a href="{{ url_for('admin.manage_departments') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Departments</a>
+            <a href="{{ url_for('admin.manage_subjects') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Subjects</a>
+            <a href="{{ url_for('admin.activity_logs') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Audit Logs</a>
+        </div>
+    </div>
+
+    <!-- KPI Metric Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Approved Materials</p>
+                <p class="text-3xl font-extrabold text-blue-600 mt-1">{{ stats.approved_resources }}</p>
+                <p class="text-[11px] text-slate-400 mt-1">Total live documents</p>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                <i class="fas fa-file-circle-check"></i>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pending Moderation</p>
+                <p class="text-3xl font-extrabold text-amber-500 mt-1">{{ stats.pending_resources }}</p>
+                <p class="text-[11px] text-slate-400 mt-1">Awaiting verification</p>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Downloads</p>
+                <p class="text-3xl font-extrabold text-emerald-600 mt-1">{{ stats.total_downloads }}</p>
+                <p class="text-[11px] text-slate-400 mt-1">Campus wide access</p>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                <i class="fas fa-chart-line"></i>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Registered Users</p>
+                <p class="text-3xl font-extrabold text-purple-600 mt-1">{{ stats.total_users }}</p>
+                <p class="text-[11px] text-slate-400 mt-1">Students & faculty</p>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Queue Alert if items pending -->
+    {% if pending_items %}
+        <div class="bg-amber-50 rounded-3xl p-6 border border-amber-200">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span>
+                    <h3 class="text-sm font-bold text-amber-900 uppercase tracking-wider">Items Awaiting Quick Approval</h3>
+                </div>
+                <a href="{{ url_for('admin.pending_queue') }}" class="text-xs font-bold text-amber-800 hover:underline">
+                    View all ({{ stats.pending_resources }}) <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for item in pending_items %}
+                    <div class="bg-white rounded-2xl p-4 border border-amber-200/80 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between text-[11px] mb-1">
+                                <span class="font-bold text-blue-600">{{ item.department_code }} Sem {{ item.semester }}</span>
+                                <span class="text-slate-400">{{ item.created_at|str_date }}</span>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-900 line-clamp-1 mb-1">{{ item.title }}</h4>
+                            <p class="text-[11px] text-slate-500 line-clamp-1">Uploaded by {{ item.uploader_name or item.uploader_username }}</p>
+                        </div>
+                        <div class="flex items-center justify-between pt-3 mt-3 border-t border-slate-100">
+                            <a href="{{ url_for('main.preview_resource', resource_id=item.id) }}" target="_blank" 
+                               class="text-xs text-slate-600 hover:text-blue-600 font-semibold flex items-center space-x-1">
+                                <i class="fas fa-eye text-[10px]"></i>
+                                <span>Preview</span>
+                            </a>
+                            <div class="flex items-center space-x-2">
+                                <form action="{{ url_for('admin.reject_resource', resource_id=item.id) }}" method="POST">
+                                    <button type="submit" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-semibold text-xs">
+                                        Reject
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('admin.approve_resource', resource_id=item.id) }}" method="POST">
+                                    <button type="submit" class="px-3 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-semibold text-xs shadow-sm">
+                                        Approve
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Resource Distribution & Activity Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Breakdown by Category -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Materials by Category</h3>
+            <div class="space-y-3">
+                {% for t in type_breakdown %}
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-semibold text-slate-700">
+                            <span>{{ t.resource_type }}</span>
+                            <span>{{ t.count }} items</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div class="bg-blue-600 h-full rounded-full" style="width: {{ (t.count / stats.total_resources * 100) if stats.total_resources > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Breakdown by Department -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Materials by Department</h3>
+            <div class="space-y-3">
+                {% for d in dept_breakdown %}
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-semibold text-slate-700">
+                            <span>{{ d.code }} - {{ d.name }}</span>
+                            <span>{{ d.count }} items</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div class="bg-indigo-600 h-full rounded-full" style="width: {{ (d.count / stats.total_resources * 100) if stats.total_resources > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Recent Audit Logs -->
+    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Recent System Audit Logs</h3>
+            <a href="{{ url_for('admin.activity_logs') }}" class="text-xs font-bold text-blue-600 hover:underline">Full Audit Trail &rarr;</a>
+        </div>
+
+        <div class="divide-y divide-slate-100 text-xs">
+            {% for log in recent_logs %}
+                <div class="py-2.5 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <span class="px-2 py-0.5 rounded font-mono font-bold text-[10px]
+                            {% if log.action in ('APPROVE_RESOURCE', 'REGISTER') %}bg-emerald-100 text-emerald-800
+                            {% elif log.action in ('REJECT_RESOURCE', 'ADMIN_DELETE_RESOURCE') %}bg-rose-100 text-rose-800
+                            {% elif log.action == 'UPLOAD_RESOURCE' %}bg-blue-100 text-blue-800
+                            {% else %}bg-slate-100 text-slate-700{% endif %}">
+                            {{ log.action }}
+                        </span>
+                        <span class="text-slate-700 font-medium">{{ log.details }}</span>
+                        <span class="text-slate-400">by {{ log.full_name or log.username or 'System' }}</span>
+                    </div>
+                    <span class="text-slate-400 font-mono text-[11px]">{{ log.created_at|str_time }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

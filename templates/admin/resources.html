@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Resources | Academix Portal Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Header & Nav Ribbon -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <span class="text-xs font-bold text-rose-600 uppercase tracking-wider">Repository Management</span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-0.5">All Academic Resources</h1>
+        </div>
+        
+        <div class="flex items-center space-x-1 overflow-x-auto pb-2 md:pb-0 text-xs font-semibold">
+            <a href="{{ url_for('admin.dashboard') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Dashboard</a>
+            <a href="{{ url_for('admin.pending_queue') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Review Queue</a>
+            <a href="{{ url_for('admin.manage_resources') }}" class="px-3.5 py-2 rounded-xl bg-blue-600 text-white shadow-sm">Resources</a>
+            <a href="{{ url_for('admin.manage_users') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Users</a>
+            <a href="{{ url_for('admin.manage_departments') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Departments</a>
+            <a href="{{ url_for('admin.manage_subjects') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Subjects</a>
+            <a href="{{ url_for('admin.activity_logs') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Audit Logs</a>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+        <form action="{{ url_for('admin.manage_resources') }}" method="GET" class="flex flex-col sm:flex-row gap-3">
+            <div class="flex-1 relative">
+                <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                <input type="text" name="q" value="{{ q }}" placeholder="Search resources by title or subject..."
+                       class="w-full pl-9 pr-3 py-2 bg-slate-50 text-xs rounded-xl border border-slate-200 focus:bg-white focus:outline-none">
+            </div>
+            <div class="w-full sm:w-44">
+                <select name="status" onchange="this.form.submit()" class="w-full py-2 px-3 bg-slate-50 text-xs rounded-xl border border-slate-200">
+                    <option value="">All Statuses</option>
+                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved Only</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending Only</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected Only</option>
+                </select>
+            </div>
+            <div class="w-full sm:w-48">
+                <select name="dept" onchange="this.form.submit()" class="w-full py-2 px-3 bg-slate-50 text-xs rounded-xl border border-slate-200">
+                    <option value="">All Departments</option>
+                    {% for d in departments %}
+                        <option value="{{ d.id }}" {% if dept_filter|string == d.id|string %}selected{% endif %}>{{ d.code }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-semibold">Filter</button>
+        </form>
+    </div>
+
+    <!-- Master Table -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                        <th class="py-3.5 px-6">Title & Specs</th>
+                        <th class="py-3.5 px-4">Subject & Dept</th>
+                        <th class="py-3.5 px-4">Category</th>
+                        <th class="py-3.5 px-4">Status</th>
+                        <th class="py-3.5 px-4 text-center">Featured</th>
+                        <th class="py-3.5 px-4 text-center">Downloads</th>
+                        <th class="py-3.5 px-6 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for r in resources %}
+                        <tr class="hover:bg-slate-50/70 transition-colors">
+                            <td class="py-4 px-6 max-w-xs">
+                                <div class="font-bold text-slate-900 line-clamp-1">
+                                    <a href="{{ url_for('main.resource_detail', resource_id=r.id) }}" class="hover:text-blue-600">
+                                        {{ r.title }}
+                                    </a>
+                                </div>
+                                <div class="text-[11px] text-slate-400 font-mono mt-0.5">
+                                    {{ r.original_file_name }} ({{ format_file_size(r.file_size) }})
+                                </div>
+                            </td>
+
+                            <td class="py-4 px-4 whitespace-nowrap">
+                                <span class="font-bold text-slate-800">{{ r.department_code }} (Sem {{ r.semester }})</span>
+                                <div class="text-[11px] text-slate-500 truncate max-w-[130px]">{{ r.subject_name }}</div>
+                            </td>
+
+                            <td class="py-4 px-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded font-semibold text-[11px] bg-slate-100 text-slate-700">
+                                    {{ r.resource_type }}
+                                </span>
+                            </td>
+
+                            <td class="py-4 px-4 whitespace-nowrap">
+                                {% if r.status == 'approved' %}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Approved</span>
+                                {% elif r.status == 'pending' %}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Pending</span>
+                                {% else %}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">Rejected</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="py-4 px-4 text-center whitespace-nowrap">
+                                <form action="{{ url_for('admin.toggle_featured', resource_id=r.id) }}" method="POST">
+                                    <button type="submit" class="p-1 rounded text-xs transition-colors {% if r.is_featured %}text-amber-500 hover:text-amber-600{% else %}text-slate-300 hover:text-slate-400{% endif %}" title="Toggle Featured">
+                                        <i class="fas fa-star text-base"></i>
+                                    </button>
+                                </form>
+                            </td>
+
+                            <td class="py-4 px-4 text-center font-bold text-slate-700">
+                                {{ r.download_count }}
+                            </td>
+
+                            <td class="py-4 px-6 text-right whitespace-nowrap">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <a href="{{ url_for('main.resource_detail', resource_id=r.id) }}" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700" title="View Detail">
+                                        <i class="fas fa-eye text-xs"></i>
+                                    </a>
+                                    <a href="{{ url_for('main.download_resource', resource_id=r.id) }}" class="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700" title="Download">
+                                        <i class="fas fa-download text-xs"></i>
+                                    </a>
+                                    <form action="{{ url_for('admin.delete_resource', resource_id=r.id) }}" method="POST"
+                                          onsubmit="return confirm('Permanently delete this resource and file from disk?');">
+                                        <button type="submit" class="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700" title="Delete">
+                                            <i class="fas fa-trash text-xs"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Users | Academix Portal Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Header & Nav Ribbon -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <span class="text-xs font-bold text-rose-600 uppercase tracking-wider">User Directory</span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-0.5">Students & Faculty Accounts</h1>
+        </div>
+        
+        <div class="flex items-center space-x-1 overflow-x-auto pb-2 md:pb-0 text-xs font-semibold">
+            <a href="{{ url_for('admin.dashboard') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Dashboard</a>
+            <a href="{{ url_for('admin.pending_queue') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Review Queue</a>
+            <a href="{{ url_for('admin.manage_resources') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Resources</a>
+            <a href="{{ url_for('admin.manage_users') }}" class="px-3.5 py-2 rounded-xl bg-blue-600 text-white shadow-sm">Users</a>
+            <a href="{{ url_for('admin.manage_departments') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Departments</a>
+            <a href="{{ url_for('admin.manage_subjects') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Subjects</a>
+            <a href="{{ url_for('admin.activity_logs') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Audit Logs</a>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                        <th class="py-3.5 px-6">User Details</th>
+                        <th class="py-3.5 px-4">Role</th>
+                        <th class="py-3.5 px-4">Department & Sem</th>
+                        <th class="py-3.5 px-4 text-center">Uploads</th>
+                        <th class="py-3.5 px-4 text-center">Status</th>
+                        <th class="py-3.5 px-6 text-right">Role & Account Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for u in users %}
+                        <tr class="hover:bg-slate-50/70 transition-colors">
+                            <td class="py-4 px-6 whitespace-nowrap">
+                                <div class="font-bold text-slate-900">{{ u.full_name }}</div>
+                                <div class="text-[11px] text-slate-400 font-mono">@{{ u.username }} • {{ u.email }}</div>
+                                {% if u.roll_number %}
+                                    <span class="text-[10px] text-slate-500 font-mono">Roll: {{ u.roll_number }}</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="py-4 px-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
+                                    {% if u.role == 'admin' %}bg-rose-100 text-rose-800
+                                    {% elif u.role == 'faculty' %}bg-amber-100 text-amber-800
+                                    {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                    {{ u.role }}
+                                </span>
+                            </td>
+
+                            <td class="py-4 px-4 whitespace-nowrap">
+                                <span class="font-bold text-slate-700">{{ u.department_code or 'N/A' }}</span>
+                                {% if u.semester %}
+                                    <span class="text-slate-400">• Sem {{ u.semester }}</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="py-4 px-4 text-center font-bold text-slate-700">
+                                {{ u.upload_count }}
+                            </td>
+
+                            <td class="py-4 px-4 text-center whitespace-nowrap">
+                                {% if u.is_active %}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Active</span>
+                                {% else %}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600">Inactive</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="py-4 px-6 text-right whitespace-nowrap">
+                                {% if u.id != session.get('user_id') %}
+                                    <div class="flex items-center justify-end space-x-2">
+                                        <!-- Role change form -->
+                                        <form action="{{ url_for('admin.update_user_role', user_id=u.id) }}" method="POST" class="inline-flex">
+                                            <select name="role" onchange="this.form.submit()" class="py-1 px-2 bg-slate-50 text-[11px] font-medium rounded-lg border border-slate-200 focus:outline-none">
+                                                <option value="student" {% if u.role == 'student' %}selected{% endif %}>Student</option>
+                                                <option value="faculty" {% if u.role == 'faculty' %}selected{% endif %}>Faculty</option>
+                                                <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
+                                            </select>
+                                        </form>
+
+                                        <!-- Toggle Active Form -->
+                                        <form action="{{ url_for('admin.toggle_user_active', user_id=u.id) }}" method="POST" class="inline">
+                                            <button type="submit" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors
+                                                {% if u.is_active %}bg-rose-50 text-rose-700 hover:bg-rose-100{% else %}bg-emerald-50 text-emerald-700 hover:bg-emerald-100{% endif %}">
+                                                {% if u.is_active %}Deactivate{% else %}Activate{% endif %}
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% else %}
+                                    <span class="text-[11px] text-slate-400 italic">Current Session</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

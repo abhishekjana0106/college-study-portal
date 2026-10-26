@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+
+{% block title %}Interactive Video Presentation | Academix Portal{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <!-- Header & Action Bar -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider mb-2">
+                <i class="fas fa-play-circle"></i>
+                <span>Project Walkthrough & Video Showcase</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Academic Project Video Presentation</h1>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">
+                Comprehensive walkthrough of architecture, curriculum hierarchy, file upload pipeline, and offline campus network access.
+            </p>
+        </div>
+
+        <!-- Download Buttons -->
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ url_for('main.download_video') }}" 
+               class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition-all flex items-center space-x-2">
+                <i class="fas fa-file-video"></i>
+                <span>Download MP4 Video</span>
+            </a>
+            <a href="{{ url_for('main.download_codebook_pdf') }}" 
+               class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-sm transition-all flex items-center space-x-2">
+                <i class="fas fa-file-pdf text-rose-400"></i>
+                <span>Download 89-Page Code PDF</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Presentation Player Card -->
+    <div class="bg-slate-950 rounded-3xl border border-slate-800 shadow-2xl overflow-hidden flex flex-col">
+        
+        <!-- Video Screen / Stage -->
+        <div id="video-stage" class="relative w-full aspect-video bg-slate-900 flex items-center justify-center overflow-hidden select-none">
+            
+            <!-- Dynamic Slide Container -->
+            <div id="slide-display" class="w-full h-full p-8 sm:p-14 flex flex-col justify-between text-white transition-opacity duration-500">
+                <!-- Injected via JavaScript -->
+            </div>
+
+            <!-- Play Overlay (shown when paused) -->
+            <div id="play-overlay" class="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center cursor-pointer transition-opacity">
+                <div class="text-center space-y-4">
+                    <button id="big-play-btn" class="w-24 h-24 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center text-3xl shadow-2xl shadow-blue-500/50 hover:scale-110 transition-all mx-auto">
+                        <i class="fas fa-play ml-1"></i>
+                    </button>
+                    <p class="text-sm font-bold text-white tracking-wide">Click to Start Video Presentation</p>
+                    <p class="text-xs text-slate-400">Includes live synchronized AI voiceover narration</p>
+                </div>
+            </div>
+
+            <!-- Voiceover Caption Banner -->
+            <div class="absolute bottom-12 left-6 right-6 p-4 rounded-2xl bg-black/85 backdrop-blur-md border border-white/10 text-white flex items-center space-x-4 shadow-2xl">
+                <div class="w-10 h-10 rounded-xl bg-blue-600/30 text-blue-400 flex items-center justify-center text-lg flex-shrink-0">
+                    <i class="fas fa-volume-high" id="caption-speaker-icon"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-0.5" id="caption-chapter">
+                        SCENE 1: PROJECT INTRODUCTION
+                    </div>
+                    <div class="text-xs sm:text-sm text-slate-100 font-medium leading-relaxed" id="caption-text">
+                        Welcome to the project demonstration of the Centralized College Academic Repository and Previous Question Paper Portal.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="absolute bottom-0 left-0 right-0 h-2 bg-slate-800">
+                <div id="video-progress" class="h-full bg-gradient-to-r from-blue-500 to-sky-400 w-0 transition-all duration-300"></div>
+            </div>
+        </div>
+
+        <!-- Video Controls Bar -->
+        <div class="p-4 sm:p-5 bg-slate-900 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs font-semibold text-slate-300">
+            <div class="flex items-center space-x-3">
+                <button id="ctrl-prev" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white" title="Previous Scene">
+                    <i class="fas fa-backward-step"></i>
+                </button>
+                <button id="ctrl-play" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white flex items-center space-x-1.5" title="Play/Pause">
+                    <i class="fas fa-play text-xs" id="ctrl-play-icon"></i>
+                    <span id="ctrl-play-label">Play</span>
+                </button>
+                <button id="ctrl-next" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white" title="Next Scene">
+                    <i class="fas fa-forward-step"></i>
+                </button>
+                <span id="time-display" class="font-mono text-slate-400 pl-2">0:00 / 1:25</span>
+            </div>
+
+            <!-- Voiceover Narration Toggle -->
+            <div class="flex items-center space-x-4">
+                <button id="ctrl-mute" class="flex items-center space-x-2 text-slate-300 hover:text-white">
+                    <i class="fas fa-volume-high text-sm text-emerald-400" id="mute-icon"></i>
+                    <span id="mute-label">Voiceover Enabled</span>
+                </button>
+
+                <button id="ctrl-fullscreen" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white" title="Toggle Fullscreen">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Chapter Quick Navigation -->
+    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Video Chapters & Scene Markers</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="chapter-list">
+            <!-- Injected via JavaScript -->
+        </div>
+    </div>
+
+</div>
+
+<!-- Interactive Presentation Controller Script -->
+<script>
+const scenes = [
+    {
+        chapter: "1. Project Introduction",
+        tag: "ACADEMIC PROJECT DEMONSTRATION",
+        title: "Centralized College Study Material & Previous Question Paper Portal",
+        subtitle: "A High-Performance Academic Repository with Online & Offline Campus LAN Access",
+        bullets: [
+            "Institutional repository eliminating scattered WhatsApp chats and lost Drive links.",
+            "Complete catalog organized by Department, Semester, and Course Subject.",
+            "Includes secure upload pipeline with multi-format validation and file security.",
+            "Engineered for both online internet access and offline local campus network (LAN) access."
+        ],
+        narration: "Welcome to the project demonstration of the Centralized College Academic Repository and Previous Question Paper Portal. This system provides a unified platform for students and faculty to access, upload, share, and download verified study materials.",
+        duration: 8
+    },
+    {
+        chapter: "2. Problem Statement",
+        tag: "THE CHALLENGE TODAY",
+        title: "Why Higher Education Needs a Centralized Hub",
+        subtitle: "Overcoming fragmented file distribution, expired links, and campus internet dead zones",
+        bullets: [
+            "Traditional sharing relies on chaotic WhatsApp and Telegram groups where files quickly get lost.",
+            "Google Drive links frequently expire, hit storage limits, or suffer broken permissions.",
+            "Absence of quality moderation leads to incomplete notes, corrupt scans, and copyright spam.",
+            "Lack of internet connectivity in college exam halls and basements blocks critical revision."
+        ],
+        narration: "Traditional methods rely on chaotic WhatsApp chats and expired Google Drive links. Academix centralizes all college academic resources under one roof with permanent institutional storage and full offline availability.",
+        duration: 9
+    },
+    {
+        chapter: "3. Academic Hierarchy",
+        tag: "CURRICULUM HIERARCHY",
+        title: "Structured 4-Tier Academic Taxonomy",
+        subtitle: "Connecting students to previous papers and notes within 3 clicks",
+        bullets: [
+            "Tier 1 - Department: Computer Science, IT, AI & Data Science, ECE, EEE, Mechanical, Civil, etc.",
+            "Tier 2 - Semester: Systematic classification across Semesters 1 through 8.",
+            "Tier 3 - Subject: Official course directory mapped to departments and semesters.",
+            "Tier 4 - Categories: Previous Question Papers (PYQs), Lecture Notes, Lab Manuals, Syllabus, and Assignments."
+        ],
+        narration: "Resources are organized hierarchically by Department, Semester, and Subject across six distinct academic categories, ensuring students can find any document within three clicks.",
+        duration: 9
+    },
+    {
+        chapter: "4. System Architecture",
+        tag: "TECHNICAL ARCHITECTURE",
+        title: "Full-Stack Python Flask & SQLite WAL Engine",
+        subtitle: "High-performance modular MVC architecture with relational schema integrity",
+        bullets: [
+            "Presentation Layer: Tailwind CSS responsive UI, embedded in-browser PDF viewer, and PWA Service Worker.",
+            "Application Layer: Python 3 and Flask 3.1 with modular Blueprints for Auth, Main, Upload, and Admin.",
+            "Data Layer: SQLite3 with Write-Ahead Logging (WAL) and foreign key enforcement for high concurrency.",
+            "Database Schema: 7 core tables including departments, subjects, users, resources, ratings, bookmarks, and activity logs."
+        ],
+        narration: "The application is built on Python Flask 3.1 with a high-performance SQLite WAL database and modular blueprints for seamless concurrent campus use.",
+        duration: 10
+    },
+    {
+        chapter: "5. Student Experience",
+        tag: "STUDENT REPOSITORY UI",
+        title: "Interactive Search, Preview & Instant Downloads",
+        subtitle: "Rich user experience designed for fast pre-examination revision",
+        bullets: [
+            "Live Autocomplete Search: Real-time dropdown search as you type subject codes or topic keywords.",
+            "In-Browser PDF Viewer: Inspect examination question papers directly in the browser before downloading.",
+            "1-Click Fast Downloads: Streamlined file streaming with real-time download counter tracking.",
+            "5-Star Peer Ratings & Bookmarks: Verified student reviews and personal saved study lists."
+        ],
+        narration: "Students can search subjects, preview question papers directly inside the browser, and download verified notes in a single click.",
+        duration: 9
+    },
+    {
+        chapter: "6. Moderation Workflow",
+        tag: "QUALITY ASSURANCE",
+        title: "File Ingestion Pipeline & Review Queue",
+        subtitle: "Ensuring high content quality and preventing copyright violations",
+        bullets: [
+            "Drag & Drop Upload: Intuitive dropzone with dynamic cascading department and subject selectors.",
+            "Automated Security Filter: Extension whitelisting, UUID filename sanitization, and 64 MB size limits.",
+            "Student Moderation Queue: Student submissions enter 'Pending' status awaiting faculty approval.",
+            "Admin Control Panel: 1-click Approve or Reject with constructive feedback for the student."
+        ],
+        narration: "Every student upload undergoes automated file validation and faculty moderation to guarantee quality before public release.",
+        duration: 9
+    },
+    {
+        chapter: "7. Offline & Campus LAN",
+        tag: "KEY INNOVATION",
+        title: "Zero Internet Required: Offline Campus LAN",
+        subtitle: "Enabling high-speed access over local college Wi-Fi routers and mobile hotspots",
+        bullets: [
+            "Local Socket Binding: Server listens on 0.0.0.0:5000 and automatically detects the local IPv4 address.",
+            "Campus Intranet: Any phone or laptop on the college Wi-Fi accesses the portal at http://<LAN_IP>:5000.",
+            "Progressive Web App: Service Worker (sw.js) caches static assets and previously viewed study resources.",
+            "Zero Data Cost: Students download heavy PDFs and previous papers without consuming mobile internet data."
+        ],
+        narration: "A key innovation: the entire portal operates completely offline over college Wi-Fi or local hotspots without internet data.",
+        duration: 11
+    },
+    {
+        chapter: "8. Security & Testing",
+        tag: "TEST VERIFICATION",
+        title: "Security Controls, Audit Logs & 100% Test Pass Rate",
+        subtitle: "Thoroughly tested and verified against industry web standards",
+        bullets: [
+            "Security: PBKDF2 SHA-256 password hashing, session cookies, and route permission decorators.",
+            "Audit Trail: Detailed activity_logs table recording timestamps, user IDs, actions, and IP addresses.",
+            "Automated Test Suite: 17 unit and integration tests covering the complete student and admin lifecycle.",
+            "100% Pass Rate: All routes, cascading APIs, download streams, and review workflows tested successfully."
+        ],
+        narration: "The system includes robust security, user activity logs, and a verified automated test suite with a 100% pass rate.",
+        duration: 9
+    },
+    {
+        chapter: "9. Summary & Deliverables",
+        tag: "CONCLUSION",
+        title: "Project Deliverables & Viva Defense Ready",
+        subtitle: "Comprehensive academic package ready for faculty evaluation and college submission",
+        bullets: [
+            "1. Full-Stack Web Application: Ready-to-run Flask codebase with pre-seeded departments, subjects, and sample PDFs.",
+            "2. 89-Page Complete Codebook PDF: Formatted with code line numbers, schemas, and architecture documentation.",
+            "3. High-Definition MP4 Video: Complete project walkthrough video ready for classroom presentations.",
+            "4. Comprehensive Project Report: 8 chapters covering SRS, ER diagrams, test cases, and future enhancements."
+        ],
+        narration: "Thank you for watching the presentation of the Centralized College Study Material and Previous Question Paper Portal.",
+        duration: 8
+    }
+];
+
+let currentIdx = 0;
+let isPlaying = false;
+let isMuted = false;
+let sceneTimer = null;
+let speechSynth = window.speechSynthesis;
+let currentUtterance = null;
+
+const slideDisplay = document.getElementById('slide-display');
+const captionChapter = document.getElementById('caption-chapter');
+const captionText = document.getElementById('caption-text');
+const videoProgress = document.getElementById('video-progress');
+const timeDisplay = document.getElementById('time-display');
+const playOverlay = document.getElementById('play-overlay');
+const ctrlPlay = document.getElementById('ctrl-play');
+const ctrlPlayLabel = document.getElementById('ctrl-play-label');
+const ctrlPlayIcon = document.getElementById('ctrl-play-icon');
+const ctrlPrev = document.getElementById('ctrl-prev');
+const ctrlNext = document.getElementById('ctrl-next');
+const ctrlMute = document.getElementById('ctrl-mute');
+const muteIcon = document.getElementById('mute-icon');
+const muteLabel = document.getElementById('mute-label');
+const chapterList = document.getElementById('chapter-list');
+
+// Populate Chapter List
+scenes.forEach((s, idx) => {
+    const btn = document.createElement('button');
+    btn.className = `p-3 rounded-2xl text-left border transition-all text-xs flex items-center justify-between ${idx === 0 ? 'bg-blue-50 border-blue-400 text-blue-900 font-bold' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'}`;
+    btn.id = `chap-btn-${idx}`;
+    btn.innerHTML = `
+        <div class="flex items-center space-x-2.5 truncate">
+            <span class="w-6 h-6 rounded-lg bg-blue-600 text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">${idx + 1}</span>
+            <span class="truncate">${s.chapter}</span>
+        </div>
+        <span class="text-[10px] text-slate-400 font-mono ml-2">${s.duration}s</span>
+    `;
+    btn.addEventListener('click', () => jumpToScene(idx));
+    chapterList.appendChild(btn);
+});
+
+function renderScene(idx) {
+    const s = scenes[idx];
+    slideDisplay.style.opacity = '0';
+
+    setTimeout(() => {
+        let bulletsHtml = s.bullets.map(b => `
+            <div class="flex items-start space-x-3">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 mt-2 flex-shrink-0"></span>
+                <span class="text-sm sm:text-base text-slate-200 leading-relaxed">${b}</span>
+            </div>
+        `).join('');
+
+        slideDisplay.innerHTML = `
+            <div>
+                <div class="inline-flex items-center px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/40 text-cyan-300 text-xs font-bold uppercase tracking-wider mb-3">
+                    ${s.tag}
+                </div>
+                <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">${s.title}</h2>
+                <p class="text-sm sm:text-base text-slate-400 mt-1">${s.subtitle}</p>
+            </div>
+
+            <div class="space-y-3.5 my-4 bg-slate-900/60 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
+                ${bulletsHtml}
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-slate-500 border-t border-slate-800 pt-3">
+                <span>Centralized College Academic Repository</span>
+                <span>Scene ${idx + 1} of ${scenes.length}</span>
+            </div>
+        `;
+
+        captionChapter.textContent = `SCENE ${idx + 1}: ${s.chapter.toUpperCase()}`;
+        captionText.textContent = s.narration;
+
+        // Update progress bar
+        const totalDuration = scenes.reduce((a, b) => a + b.duration, 0);
+        const elapsed = scenes.slice(0, idx).reduce((a, b) => a + b.duration, 0);
+        const pct = ((elapsed + s.duration) / totalDuration) * 100;
+        videoProgress.style.width = `${pct}%`;
+        timeDisplay.textContent = `${Math.floor(elapsed / 60)}:${(elapsed % 60).toString().padStart(2, '0')} / 1:25`;
+
+        // Update chapter list styling
+        scenes.forEach((_, i) => {
+            const b = document.getElementById(`chap-btn-${i}`);
+            if (i === idx) {
+                b.className = 'p-3 rounded-2xl text-left border transition-all text-xs flex items-center justify-between bg-blue-50 border-blue-400 text-blue-900 font-bold shadow-sm';
+            } else {
+                b.className = 'p-3 rounded-2xl text-left border transition-all text-xs flex items-center justify-between bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100';
+            }
+        });
+
+        slideDisplay.style.opacity = '1';
+
+        // Play narration if active
+        if (isPlaying && !isMuted) {
+            speakNarration(s.narration);
+        }
+    }, 200);
+}
+
+function speakNarration(text) {
+    if (!speechSynth) return;
+    speechSynth.cancel();
+    currentUtterance = new SpeechSynthesisUtterance(text);
+    currentUtterance.rate = 1.0;
+    currentUtterance.pitch = 1.0;
+    speechSynth.speak(currentUtterance);
+}
+
+function play() {
+    isPlaying = true;
+    playOverlay.classList.add('opacity-0', 'pointer-events-none');
+    ctrlPlayLabel.textContent = 'Pause';
+    ctrlPlayIcon.className = 'fas fa-pause text-xs';
+    
+    renderScene(currentIdx);
+    startSceneTimer();
+}
+
+function pause() {
+    isPlaying = false;
+    clearTimeout(sceneTimer);
+    if (speechSynth) speechSynth.cancel();
+    playOverlay.classList.remove('opacity-0', 'pointer-events-none');
+    ctrlPlayLabel.textContent = 'Play';
+    ctrlPlayIcon.className = 'fas fa-play text-xs';
+}
+
+function startSceneTimer() {
+    clearTimeout(sceneTimer);
+    const durMs = scenes[currentIdx].duration * 1000;
+    sceneTimer = setTimeout(() => {
+        if (currentIdx < scenes.length - 1) {
+            currentIdx++;
+            renderScene(currentIdx);
+            startSceneTimer();
+        } else {
+            pause();
+            currentIdx = 0;
+            renderScene(0);
+        }
+    }, durMs);
+}
+
+function jumpToScene(idx) {
+    currentIdx = idx;
+    renderScene(currentIdx);
+    if (isPlaying) {
+        startSceneTimer();
+    }
+}
+
+// Event Listeners
+document.getElementById('big-play-btn').addEventListener('click', play);
+playOverlay.addEventListener('click', play);
+
+ctrlPlay.addEventListener('click', () => {
+    if (isPlaying) pause();
+    else play();
+});
+
+ctrlPrev.addEventListener('click', () => {
+    if (currentIdx > 0) jumpToScene(currentIdx - 1);
+});
+
+ctrlNext.addEventListener('click', () => {
+    if (currentIdx < scenes.length - 1) jumpToScene(currentIdx + 1);
+});
+
+ctrlMute.addEventListener('click', () => {
+    isMuted = !isMuted;
+    if (isMuted) {
+        muteIcon.className = 'fas fa-volume-xmark text-sm text-rose-400';
+        muteLabel.textContent = 'Voiceover Muted';
+        if (speechSynth) speechSynth.cancel();
+    } else {
+        muteIcon.className = 'fas fa-volume-high text-sm text-emerald-400';
+        muteLabel.textContent = 'Voiceover Enabled';
+        if (isPlaying) speakNarration(scenes[currentIdx].narration);
+    }
+});
+
+document.getElementById('ctrl-fullscreen').addEventListener('click', () => {
+    const stage = document.getElementById('video-stage');
+    if (!document.fullscreenElement) {
+        stage.requestFullscreen().catch(err => alert(err.message));
+    } else {
+        document.exitFullscreen();
+    }
+});
+
+// Initial Render
+renderScene(0);
+</script>
+{% endblock %}

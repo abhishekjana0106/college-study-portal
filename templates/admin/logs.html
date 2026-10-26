@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Audit Logs | Academix Portal Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Header & Nav Ribbon -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <span class="text-xs font-bold text-rose-600 uppercase tracking-wider">Security & Compliance</span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-0.5">System Activity & Audit Trail</h1>
+        </div>
+        
+        <div class="flex items-center space-x-1 overflow-x-auto pb-2 md:pb-0 text-xs font-semibold">
+            <a href="{{ url_for('admin.dashboard') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Dashboard</a>
+            <a href="{{ url_for('admin.pending_queue') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Review Queue</a>
+            <a href="{{ url_for('admin.manage_resources') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Resources</a>
+            <a href="{{ url_for('admin.manage_users') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Users</a>
+            <a href="{{ url_for('admin.manage_departments') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Departments</a>
+            <a href="{{ url_for('admin.manage_subjects') }}" class="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Subjects</a>
+            <a href="{{ url_for('admin.activity_logs') }}" class="px-3.5 py-2 rounded-xl bg-blue-600 text-white shadow-sm">Audit Logs</a>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                        <th class="py-3.5 px-6">Timestamp</th>
+                        <th class="py-3.5 px-4">Action</th>
+                        <th class="py-3.5 px-4">Actor</th>
+                        <th class="py-3.5 px-4">Details</th>
+                        <th class="py-3.5 px-6 text-right">IP Address</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-mono">
+                    {% for l in logs %}
+                        <tr class="hover:bg-slate-50/70 transition-colors">
+                            <td class="py-3 px-6 whitespace-nowrap text-slate-500 text-[11px]">
+                                {{ l.created_at|str_time }}
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold font-sans
+                                    {% if 'APPROVE' in l.action or 'REGISTER' in l.action %}bg-emerald-100 text-emerald-800
+                                    {% elif 'REJECT' in l.action or 'DELETE' in l.action %}bg-rose-100 text-rose-800
+                                    {% elif 'UPLOAD' in l.action %}bg-blue-100 text-blue-800
+                                    {% else %}bg-slate-100 text-slate-700{% endif %}">
+                                    {{ l.action }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 whitespace-nowrap font-sans">
+                                {% if l.username %}
+                                    <span class="font-bold text-slate-800">{{ l.full_name }}</span>
+                                    <span class="text-slate-400 text-[11px]">(@{{ l.username }})</span>
+                                {% else %}
+                                    <span class="text-slate-400 italic">Anonymous/System</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-slate-700 font-sans max-w-md">
+                                {{ l.details }}
+                            </td>
+                            <td class="py-3 px-6 text-right text-slate-400 text-[11px]">
+                                {{ l.ip_address }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

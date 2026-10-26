@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ resource.title }} | Academix Portal{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Breadcrumb -->
+    <nav class="flex items-center space-x-2 text-xs text-slate-500 mb-6 flex-wrap">
+        <a href="{{ url_for('main.index') }}" class="hover:text-blue-600">Home</a>
+        <i class="fas fa-chevron-right text-[10px] text-slate-400"></i>
+        <a href="{{ url_for('main.browse') }}" class="hover:text-blue-600">Browse</a>
+        <i class="fas fa-chevron-right text-[10px] text-slate-400"></i>
+        <a href="{{ url_for('main.browse', dept=resource.department_id) }}" class="hover:text-blue-600">{{ resource.department_code }}</a>
+        <i class="fas fa-chevron-right text-[10px] text-slate-400"></i>
+        <span class="text-slate-800 font-semibold truncate max-w-xs">{{ resource.subject_name }}</span>
+    </nav>
+
+    <!-- Header Card -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm mb-8">
+        <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+            <div class="space-y-3 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold
+                        {% if resource.resource_type == 'Question Paper' %}bg-amber-100 text-amber-800
+                        {% elif resource.resource_type == 'Lecture Notes' %}bg-emerald-100 text-emerald-800
+                        {% elif resource.resource_type == 'Lab Manual' %}bg-purple-100 text-purple-800
+                        {% elif resource.resource_type == 'Assignment' %}bg-sky-100 text-sky-800
+                        {% else %}bg-slate-100 text-slate-800{% endif %}">
+                        <i class="fas fa-file-lines mr-1.5"></i> {{ resource.resource_type }}
+                    </span>
+                    <span class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-bold">
+                        {{ resource.department_code }} • Semester {{ resource.semester }}
+                    </span>
+                    <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-mono text-xs font-semibold">
+                        {{ resource.academic_year }}
+                    </span>
+                    {% if resource.exam_type and resource.exam_type != 'N/A' %}
+                        <span class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200/50 text-xs font-semibold">
+                            <i class="fas fa-pen-nib mr-1"></i> {{ resource.exam_type }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">
+                    {{ resource.title }}
+                </h1>
+
+                <div class="flex items-center space-x-2 text-sm text-slate-600 font-medium">
+                    <span class="text-blue-600 font-bold font-mono">{{ resource.subject_code }}</span>
+                    <span>-</span>
+                    <span>{{ resource.subject_name }}</span>
+                </div>
+
+                <!-- Contributor & Rating line -->
+                <div class="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-2 border-t border-slate-100">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-user-circle text-slate-400 text-sm"></i>
+                        <span>Contributed by <strong class="text-slate-800">{{ resource.uploader_name or 'Faculty Member' }}</strong></span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider
+                            {% if resource.uploader_role == 'admin' %}bg-rose-100 text-rose-700
+                            {% elif resource.uploader_role == 'faculty' %}bg-amber-100 text-amber-700
+                            {% else %}bg-blue-100 text-blue-700{% endif %}">
+                            {{ resource.uploader_role or 'faculty' }}
+                        </span>
+                    </div>
+
+                    <div class="flex items-center space-x-1 text-amber-500 font-bold">
+                        {% for i in range(1, 6) %}
+                            <i class="fas fa-star text-xs {% if i <= resource.avg_rating %}text-amber-400{% else %}text-slate-200{% endif %}"></i>
+                        {% endfor %}
+                        <span class="ml-1 text-slate-700 font-bold">{{ "%.1f"|format(resource.avg_rating) }}</span>
+                        <span class="text-slate-400 font-normal">({{ resource.rating_count }} reviews)</span>
+                    </div>
+
+                    <div class="text-slate-400">
+                        <i class="far fa-clock mr-1"></i> Added on {{ resource.created_at|str_date }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Download & Bookmark CTA Box -->
+            <div class="flex flex-col sm:flex-row lg:flex-col gap-3 min-w-[220px]">
+                <a href="{{ url_for('main.download_resource', resource_id=resource.id) }}" 
+                   class="px-6 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm text-center shadow-lg shadow-blue-500/30 hover:scale-[1.02] transition-all flex items-center justify-center space-x-2">
+                    <i class="fas fa-cloud-arrow-down text-base"></i>
+                    <span>Download Resource</span>
+                </a>
+
+                {% if session.get('user_id') %}
+                    <form action="{{ url_for('main.toggle_bookmark', resource_id=resource.id) }}" method="POST">
+                        <button type="submit" 
+                                class="w-full py-2.5 px-4 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center space-x-2
+                                {% if is_bookmarked %}bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100{% else %}bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100{% endif %}">
+                            <i class="fas fa-bookmark {% if is_bookmarked %}text-amber-500{% else %}text-slate-400{% endif %}"></i>
+                            <span>{% if is_bookmarked %}Saved in Bookmarks{% else %}Bookmark for Later{% endif %}</span>
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{{ url_for('auth.login', next=request.url) }}" 
+                       class="py-2.5 px-4 rounded-xl text-xs font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 text-center flex items-center justify-center space-x-2">
+                        <i class="far fa-bookmark text-slate-400"></i>
+                        <span>Login to Bookmark</span>
+                    </a>
+                {% endif %}
+
+                <!-- WhatsApp / Copy Share -->
+                <button onclick="navigator.clipboard.writeText(window.location.href); alert('Resource link copied to clipboard!');" 
+                        class="py-2 px-3 rounded-xl text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors flex items-center justify-center space-x-1">
+                    <i class="far fa-clone text-slate-400"></i>
+                    <span>Copy Share Link</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid (Left Preview & Description, Right Metadata & Related) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left Column: Preview & Detailed Info -->
+        <div class="lg:col-span-2 space-y-8">
+            
+            <!-- In-Browser Document Previewer -->
+            <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                        <i class="fas fa-eye text-blue-600"></i>
+                        <span>In-Browser Document Preview</span>
+                    </h3>
+                    <a href="{{ url_for('main.preview_resource', resource_id=resource.id) }}" target="_blank" 
+                       class="text-xs font-semibold text-blue-600 hover:underline flex items-center space-x-1">
+                        <span>Open Full Screen</span>
+                        <i class="fas fa-arrow-up-right-from-square text-[10px]"></i>
+                    </a>
+                </div>
+
+                <!-- Preview container -->
+                <div class="w-full bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-inner">
+                    {% if resource.file_ext == 'pdf' %}
+                        <iframe src="{{ url_for('main.preview_resource', resource_id=resource.id) }}#toolbar=0" 
+                                class="w-full h-[520px] rounded-2xl border-0" 
+                                title="{{ resource.title }}">
+                        </iframe>
+                    {% elif resource.file_ext in ['jpg', 'jpeg', 'png'] %}
+                        <div class="p-4 flex items-center justify-center min-h-[400px]">
+                            <img src="{{ url_for('main.preview_resource', resource_id=resource.id) }}" alt="{{ resource.title }}" class="max-h-[500px] object-contain rounded-lg shadow-md">
+                        </div>
+                    {% else %}
+                        <div class="py-16 text-center text-slate-400 p-6 space-y-3">
+                            <i class="fas fa-file-lines text-5xl text-slate-600 mb-2"></i>
+                            <h4 class="text-sm font-semibold text-white">Preview unavailable for this file format ({{ resource.file_ext|upper }})</h4>
+                            <p class="text-xs max-w-sm mx-auto">This file can be downloaded directly to your device and opened using Microsoft Office or a compatible viewer.</p>
+                            <a href="{{ url_for('main.download_resource', resource_id=resource.id) }}" 
+                               class="inline-flex items-center px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold shadow-md">
+                                <i class="fas fa-download mr-1.5"></i> Download File to View
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Description & Academic Scope -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
+                <h3 class="text-base font-bold text-slate-900">About this Material</h3>
+                <p class="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+                    {{ resource.description or 'No extra description provided for this academic document.' }}
+                </p>
+
+                <!-- Tags -->
+                {% if tag_list %}
+                    <div class="pt-4 border-t border-slate-100">
+                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Keywords & Tags</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            {% for tag in tag_list %}
+                                <a href="{{ url_for('main.browse', q=tag) }}" 
+                                   class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition-colors">
+                                    #{{ tag }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Student Rating & Reviews Section -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Peer Reviews & Ratings</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Verified feedback from students and faculty who downloaded this resource.</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-extrabold text-slate-900">{{ "%.1f"|format(resource.avg_rating) }} <span class="text-xs text-slate-400 font-normal">/ 5.0</span></div>
+                        <div class="text-[11px] text-slate-500">{{ resource.rating_count }} student ratings</div>
+                    </div>
+                </div>
+
+                <!-- Rating Form -->
+                {% if session.get('user_id') %}
+                    <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200/80">
+                        <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">
+                            {% if user_rating %}Update Your Rating & Feedback{% else %}Rate this Study Material{% endif %}
+                        </h4>
+                        <form action="{{ url_for('main.rate_resource', resource_id=resource.id) }}" method="POST" class="space-y-3">
+                            <div>
+                                <label class="block text-xs text-slate-600 mb-1 font-medium">Select Star Rating:</label>
+                                <div class="flex items-center space-x-3 text-sm">
+                                    {% for r in range(5, 0, -1) %}
+                                        <label class="flex items-center space-x-1 cursor-pointer">
+                                            <input type="radio" name="rating" value="{{ r }}" required
+                                                   {% if user_rating and user_rating.rating == r %}checked{% elif not user_rating and r == 5 %}checked{% endif %}
+                                                   class="text-amber-500 focus:ring-amber-400">
+                                            <span class="font-bold text-slate-700">{{ r }} <i class="fas fa-star text-amber-400 text-xs"></i></span>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div>
+                                <textarea name="review" rows="2" placeholder="Was this previous paper or note helpful for your exams? Share brief feedback..."
+                                          class="w-full text-xs p-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">{{ user_rating.review if user_rating else '' }}</textarea>
+                            </div>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors">
+                                Submit Feedback
+                            </button>
+                        </form>
+                    </div>
+                {% else %}
+                    <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-center text-xs text-slate-600">
+                        <a href="{{ url_for('auth.login', next=request.url) }}" class="text-blue-600 font-bold hover:underline">Log in</a> to submit a star rating or feedback review for this paper.
+                    </div>
+                {% endif %}
+
+                <!-- Existing Reviews List -->
+                <div class="space-y-4 pt-2">
+                    {% for rev in reviews %}
+                        <div class="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-6 h-6 rounded-full bg-slate-200 text-slate-700 font-bold text-[10px] flex items-center justify-center">
+                                        {{ rev.full_name[:1].upper() }}
+                                    </div>
+                                    <span class="text-xs font-bold text-slate-800">{{ rev.full_name }}</span>
+                                    <span class="text-[10px] text-slate-400 uppercase font-mono">({{ rev.role }})</span>
+                                </div>
+                                <div class="flex items-center text-amber-400 text-xs">
+                                    {% for s in range(1, 6) %}
+                                        <i class="fas fa-star {% if s <= rev.rating %}text-amber-400{% else %}text-slate-200{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% if rev.review %}
+                                <p class="text-xs text-slate-600 leading-relaxed pl-8">
+                                    {{ rev.review }}
+                                </p>
+                            {% endif %}
+                            <div class="text-[10px] text-slate-400 pl-8">
+                                {{ rev.created_at|str_date }}
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-xs text-slate-400 text-center py-4">No reviews yet. Be the first student to review this material!</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Document Details, LAN Box, Related -->
+        <div class="space-y-6">
+
+            <!-- File Properties Box -->
+            <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+                <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Document Specifications</h3>
+                
+                <div class="divide-y divide-slate-100 text-xs">
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500">File Type</span>
+                        <span class="font-bold text-slate-800 uppercase font-mono">{{ resource.file_ext }} Document</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500">File Size</span>
+                        <span class="font-bold text-slate-800 font-mono">{{ format_file_size(resource.file_size) }}</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500">Total Downloads</span>
+                        <span class="font-bold text-blue-600">{{ resource.download_count }} times</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500">Total Page Views</span>
+                        <span class="font-bold text-slate-800">{{ resource.view_count }}</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500">Academic Year</span>
+                        <span class="font-bold text-slate-800">{{ resource.academic_year }}</span>
+                    </div>
+                    <div class="py-2.5 flex items-center justify-between">
+                        <span class="text-slate-500">Verification Status</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                            <i class="fas fa-check-circle mr-1"></i> Verified & Approved
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Offline & Campus LAN QR / Link Card -->
+            <div class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-3xl p-6 shadow-md space-y-3">
+                <div class="flex items-center space-x-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+                    <i class="fas fa-wifi"></i>
+                    <span>Offline Campus LAN</span>
+                </div>
+                <h4 class="text-sm font-bold text-white">Share with Classmates on Local Wi-Fi</h4>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Classmates on the same Wi-Fi router or mobile hotspot can directly open this resource without internet data:
+                </p>
+                <div class="p-2.5 bg-black/40 rounded-xl border border-white/10 text-xs font-mono text-amber-300 break-all select-all">
+                    http://{{ lan_ip }}:{{ server_port }}/resource/{{ resource.id }}
+                </div>
+            </div>
+
+            <!-- Related Materials in Subject -->
+            {% if related %}
+                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+                    <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">More in this Subject</h3>
+                    
+                    <div class="space-y-3">
+                        {% for rel in related %}
+                            <a href="{{ url_for('main.resource_detail', resource_id=rel.id) }}" 
+                               class="block p-3 rounded-2xl hover:bg-slate-50 border border-slate-100 transition-colors group">
+                                <div class="flex items-center justify-between text-[11px] mb-1">
+                                    <span class="font-bold text-blue-600">{{ rel.resource_type }}</span>
+                                    <span class="text-slate-400 font-mono">{{ rel.academic_year }}</span>
+                                </div>
+                                <h4 class="text-xs font-bold text-slate-800 group-hover:text-blue-600 line-clamp-2">
+                                    {{ rel.title }}
+                                </h4>
+                                <div class="flex items-center space-x-3 text-[10px] text-slate-400 mt-1">
+                                    <span><i class="fas fa-download mr-1"></i> {{ rel.download_count }}</span>
+                                    <span><i class="fas fa-star text-amber-400 mr-1"></i> {{ "%.1f"|format(rel.avg_rating) }}</span>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
